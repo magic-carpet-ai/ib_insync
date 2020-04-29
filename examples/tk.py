@@ -8,13 +8,19 @@ from ib_insync.contract import *  # noqa
 
 util.patchAsyncio()
 
+# specify IB GW/TWS connection parameters
+host = 'localhost'      # original '127.0.0.1'
+port = 4002             # original 7497
+client_id = 2           # original 1
+
 
 class TkApp:
     """
     Example of integrating with Tkinter.
     """
     def __init__(self):
-        self.ib = IB().connect()
+        # self.ib = IB().connect()
+        self.ib = IB().connect(host, port, client_id)
         self.root = tk.Tk()
         self.root.protocol('WM_DELETE_WINDOW', self._onDeleteWindow)
         self.entry = tk.Entry(self.root, width=50)

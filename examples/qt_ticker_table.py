@@ -8,6 +8,11 @@ import PyQt5.QtWidgets as qt
 from ib_insync import IB, util
 from ib_insync.contract import *  # noqa
 
+# specify IB GW/TWS connection parameters
+host = 'localhost'      # original '127.0.0.1'
+port = 4002             # original 7497
+client_id = 1           # original 1
+
 
 class TickerTable(qt.QTableWidget):
 
@@ -104,7 +109,8 @@ if __name__ == '__main__':
     util.patchAsyncio()
     util.useQt()
     # util.useQt('PySide2')
-    window = Window('127.0.0.1', 7497, 1)
+    # window = Window('127.0.0.1', 7497, 1)
+    window = Window(host, port, client_id)
     window.resize(600, 400)
     window.show()
     IB.run()
