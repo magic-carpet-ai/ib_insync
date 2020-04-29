@@ -6,8 +6,6 @@ import tkinter as tk
 from ib_insync import IB, util
 from ib_insync.contract import *  # noqa
 
-util.patchAsyncio()
-
 # specify IB GW/TWS connection parameters
 host = 'localhost'      # original '127.0.0.1'
 port = 4002             # original 7497
@@ -51,5 +49,7 @@ class TkApp:
         self.loop.stop()
 
 
-app = TkApp()
-app.run()
+if __name__ == '__main__':
+    util.patchAsyncio()
+    app = TkApp()
+    app.run()
