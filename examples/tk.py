@@ -12,12 +12,20 @@ port = 4002             # original 7497
 client_id = 2           # original 1
 
 
+def custom_run_forever(loop):
+    # instead of actual loop.run_forever(), we await on an endless task
+    async def sleep2():
+        while True: await asyncio.sleep(2)
+    loop.run_until_complete(sleep2())
+
+
 class TkApp:
     """
     Example of integrating with Tkinter.
     """
     def __init__(self):
         # self.ib = IB().connect()
+        self.loop = asyncio.get_event_loop()
         self.ib = IB().connect(host, port, client_id)
         self.root = tk.Tk()
         self.root.protocol('WM_DELETE_WINDOW', self._onDeleteWindow)
@@ -39,7 +47,8 @@ class TkApp:
 
     def run(self):
         self._onTimeout()
-        self.loop.run_forever()
+        # self.loop.run_forever()
+        custom_run_forever(self.loop)
 
     def _onTimeout(self):
         self.root.update()
