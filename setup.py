@@ -19,7 +19,8 @@ with open(here / 'README.rst', encoding='utf-8') as f:
 
 setup(
     name='ib_insync',
-    version=__version__,
+    #version=__version__,
+    use_scm_version=True,
     description='Python sync/async framework for Interactive Brokers API',
     long_description=long_description,
     url='https://github.com/erdewit/ib_insync',
@@ -39,5 +40,5 @@ setup(
     packages=['ib_insync'],
     package_data={'ib_insync': ['py.typed']},
     install_requires=['eventkit', 'nest_asyncio'],
-    setup_requires=['flake8']
+    setup_requires=['flake8', 'setuptools_scm']
 )
