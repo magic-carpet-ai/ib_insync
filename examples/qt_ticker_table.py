@@ -14,6 +14,11 @@ port = 4002             # original 7497
 client_id = 1           # original 1
 
 
+# some futures examples we can subscribe to
+# Future('YG', '20200626', 'NYSELIFFE')  # mini gold
+# Future('YI', '20200729', 'NYSELIFFE')  # mini silver
+
+
 class TickerTable(qt.QTableWidget):
 
     headers = [
