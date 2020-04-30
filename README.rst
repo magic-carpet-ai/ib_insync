@@ -154,3 +154,11 @@ Good luck and enjoy,
 
 .. |Build| image:: https://travis-ci.org/erdewit/ib_insync.svg?branch=master
    :target: https://travis-ci.org/erdewit/ib_insync
+
+
+MCAI Usage
+----------
+
+MCAI maintains a local fork of erdewit/ib_insync package. Install via:
+
+pip install --upgrade git+ssh://git@github.com/magic-carpet-ai/ib_insync.git
