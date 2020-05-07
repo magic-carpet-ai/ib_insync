@@ -460,11 +460,18 @@ class Watchdog:
 
 
 if __name__ == '__main__':
+    # get IB GW user-id and password from the environment
+    userid = os.environ['TWSUSERID']
+    password = os.environ['TWSPASSWORD']
+    # print('userid:', userid, 'password:', password)
+
     asyncio.get_event_loop().set_debug(True)
     util.logToConsole(logging.DEBUG)
-    ibc = IBC(976, gateway=True, tradingMode='paper')
-#             userid='edemo', password='demouser')
+    ibc = IBC(972, gateway=True, tradingMode='paper',
+              userid=userid, password=password)
+
     ib = IB()
-    app = Watchdog(ibc, ib, port=4002, appStartupTime=15, appTimeout=10)
+    app = Watchdog(ibc, ib, host='localhost', port=4002, clientId=101, readonly=True,
+                   appStartupTime=15, appTimeout=10, retryDelay=10)
     app.start()
     IB.run()
