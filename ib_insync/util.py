@@ -8,7 +8,7 @@ import sys
 import time
 from dataclasses import fields, is_dataclass
 from datetime import date, datetime, time as time_, timedelta, timezone
-from typing import AsyncIterator, Awaitable, Callable, Iterator, Union
+from typing import AsyncIterator, Awaitable, Callable, Iterator, Union, List
 
 import eventkit as ev
 
@@ -22,11 +22,12 @@ UNSET_INTEGER = 2 ** 31 - 1
 UNSET_DOUBLE = sys.float_info.max
 
 
-def df(objs, labels=None):
+def df(objs, labels: List[str] = None):
     """
     Create pandas DataFrame from the sequence of same-type objects.
-    When a list of labels is given then only retain those labels and
-    drop the rest.
+
+    Args:
+      labels: If supplied, retain only the given labels and drop the rest.
     """
     import pandas as pd
     from .objects import DynamicObject
@@ -40,9 +41,11 @@ def df(objs, labels=None):
             df = pd.DataFrame.from_records(o.__dict__ for o in objs)
         else:
             df = pd.DataFrame.from_records(objs)
-        if isinstance(obj, tuple) and hasattr(obj, '_fields'):
-            # assume it's a namedtuple
-            df.columns = obj.__class__._fields
+        if isinstance(obj, tuple):
+            _fields = getattr(obj, '_fields', None)
+            if _fields:
+                # assume it's a namedtuple
+                df.columns = _fields
     else:
         df = None
     if labels:
@@ -526,5 +529,9 @@ def parseIBDatetime(s: str) -> Union[date, datetime]:
     elif s.isdigit():
         dt = datetime.fromtimestamp(int(s), timezone.utc)
     else:
-        dt = datetime.strptime(s, '%Y%m%d  %H:%M:%S')
+        # YYYYmmdd  HH:MM:SS
+        # or
+        # YYYY-mm-dd HH:MM:SS.0
+        ss = s.replace(' ', '').replace('-', '')[:16]
+        dt = datetime.strptime(ss, '%Y%m%d%H:%M:%S')
     return dt
