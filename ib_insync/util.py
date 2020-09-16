@@ -8,7 +8,7 @@ import sys
 import time
 from dataclasses import fields, is_dataclass
 from datetime import date, datetime, time as time_, timedelta, timezone
-from typing import AsyncIterator, Awaitable, Callable, Iterator, Union, List
+from typing import AsyncIterator, Awaitable, Callable, Iterator, List, Union
 
 import eventkit as ev
 
@@ -84,7 +84,9 @@ def dataclassNonDefaults(obj) -> dict:
     values = [getattr(obj, field.name) for field in fields(obj)]
     return {
         field.name: value for field, value in zip(fields(obj), values)
-        if value != field.default and value == value and value != []}
+        if value != field.default
+        and value == value
+        and not (isinstance(value, list) and value == [])}
 
 
 def dataclassUpdate(obj, *srcObjs, **kwargs) -> object:
