@@ -88,8 +88,15 @@ class IB:
           blocking request to finish before raising ``asyncio.TimeoutError``.
           The default value of 0 will wait indefinitely.
           Note: This timeout is not used for the ``*Async`` methods.
+        RaiseRequestErrors (bool):
+          Specifies the behaviour when certain API requests fail:
+
+          * :data:`False`: Silently return an empty result;
+          * :data:`True`: Raise a :class:`.RequestError`.
         MaxSyncedSubAccounts (int): Do not use sub-account updates
           if the number of sub-accounts exceeds this number (50 by default).
+        TimezoneTWS (pytz.timezone): Specifies what timezone TWS (or gateway)
+          is using. The default is to assume local system timezone.
 
     Events:
         * ``connectedEvent`` ():
@@ -187,7 +194,9 @@ class IB:
         'errorEvent', 'timeoutEvent')
 
     RequestTimeout: float = 0
+    RaiseRequestErrors: bool = False
     MaxSyncedSubAccounts: int = 50
+    TimezoneTWS = None
 
     def __init__(self):
         self._createEvents()
@@ -393,14 +402,7 @@ class IB:
         Args:
             account: If specified, filter for this account name.
         """
-        if not self.wrapper.acctSummary:
-            # loaded on demand since it takes ca. 250 ms
-            self.reqAccountSummary()
-        if account:
-            return [v for v in self.wrapper.acctSummary.values()
-                    if v.account == account]
-        else:
-            return list(self.wrapper.acctSummary.values())
+        return self._run(self.accountSummaryAsync(account))
 
     def portfolio(self) -> List[PortfolioItem]:
         """List of portfolio items of the default account."""
@@ -1166,8 +1168,8 @@ class IB:
                 221    ``markPrice``
                 225    ``auctionVolume``, ``auctionPrice``,
                        ``auctionImbalance``
-                233    ``last``, ``lastSize``, ``rtVolume``, ``vwap``
-                       (Time & Sales)
+                233    ``last``, ``lastSize``, ``rtVolume``, ``rtTime``,
+                       ``vwap`` (Time & Sales)
                 236    ``shortableShares``
                 258    ``fundamentalRatios`` (of type
                        :class:`ib_insync.objects.FundamentalRatios`)
@@ -1740,6 +1742,17 @@ class IB:
         future = self.wrapper.startReq(reqId)
         self.client.reqAccountUpdatesMulti(reqId, account, modelCode, False)
         return future
+
+    async def accountSummaryAsync(self, account: str = '') -> \
+            List[AccountValue]:
+        if not self.wrapper.acctSummary:
+            # loaded on demand since it takes ca. 250 ms
+            await self.reqAccountSummaryAsync()
+        if account:
+            return [v for v in self.wrapper.acctSummary.values()
+                    if v.account == account]
+        else:
+            return list(self.wrapper.acctSummary.values())
 
     def reqAccountSummaryAsync(self) -> Awaitable[None]:
         reqId = self.client.getReqId()

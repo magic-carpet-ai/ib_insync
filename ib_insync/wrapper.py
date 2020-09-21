@@ -25,10 +25,29 @@ from ib_insync.util import (
     UNSET_DOUBLE, UNSET_INTEGER, dataclassAsDict, dataclassUpdate,
     globalErrorEvent, isNan, parseIBDatetime)
 
-__all__ = ['Wrapper']
+__all__ = ['RequestError', 'Wrapper']
 
 
 OrderKeyType = Union[int, Tuple[int, int]]
+
+
+class RequestError(Exception):
+    """
+    Exception to raise when the API reports an error that can be tied to
+    a single request.
+    """
+
+    def __init__(self, reqId: int, code: int, message: str):
+        """
+        Args:
+          reqId: Original request ID.
+          code: Original error code.
+          message: Original error message.
+        """
+        super().__init__(f'API error: {code}: {message}')
+        self.reqId = reqId
+        self.code = code
+        self.message = message
 
 
 class Wrapper:
@@ -754,7 +773,7 @@ class Wrapper:
                 # price;size;ms since epoch;total volume;VWAP;single trade
                 # example:
                 # 701.28;1;1348075471534;67854;701.46918464;true
-                priceStr, sizeStr, _, volume, vwap, _ = value.split(';')
+                priceStr, sizeStr, rtTime, volume, vwap, _ = value.split(';')
                 if volume:
                     if tickType == 48:
                         ticker.rtVolume = int(volume)
@@ -762,6 +781,9 @@ class Wrapper:
                         ticker.rtTradeVolume = int(volume)
                 if vwap:
                     ticker.vwap = float(vwap)
+                if rtTime:
+                    ticker.rtTime = datetime.fromtimestamp(
+                        int(rtTime) / 1000, timezone.utc)
                 if priceStr == '':
                     return
                 price = float(priceStr)
@@ -785,28 +807,6 @@ class Wrapper:
                     float(next12) if next12 else None,
                     parseIBDatetime(nextDate) if nextDate else None,
                     float(nextAmount) if nextAmount else None)
-            elif tickType == 77:
-                # RT Trade Volume
-                # price;size;ms since epoch;total volume;VWAP;single trade
-                # example value: '90.31;1;1568407233444;19015;90.07778509;true'
-                priceStr, sizeStr, _, rtTradeVolume, vwap, _ = value.split(';')
-                if rtTradeVolume:
-                    ticker.rtTradeVolume = int(rtTradeVolume)
-                if vwap:
-                    ticker.vwap = float(vwap)
-                if priceStr == '':
-                    return
-                price = float(priceStr)
-                size = int(sizeStr)
-                if price and size:
-                    if ticker.prevLast != ticker.last:
-                        ticker.prevLast = ticker.last
-                        ticker.last = price
-                    if ticker.prevLastSize != ticker.lastSize:
-                        ticker.prevLastSize = ticker.lastSize
-                        ticker.lastSize = size
-                    tick = TickData(self.lastTime, tickType, price, size)
-                    ticker.ticks.append(tick)
             self.pendingTickers.add(ticker)
         except ValueError:
             self._logger.error(
@@ -1021,7 +1021,12 @@ class Wrapper:
             self._logger.error(msg)
             if reqId in self._futures:
                 # the request failed
-                self._endReq(reqId)
+                if self.ib.RaiseRequestErrors:
+                    error = RequestError(reqId, errorCode, errorString)
+                    self._endReq(reqId, error, success=False)
+                else:
+                    self._endReq(reqId)
+
             elif (self.clientId, reqId) in self.trades:
                 # something is wrong with the order, cancel it
                 trade = self.trades[(self.clientId, reqId)]
