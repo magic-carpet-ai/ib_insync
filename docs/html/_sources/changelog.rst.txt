@@ -4,6 +4,22 @@ Changelog
 0.9
 ---
 
+Version 0.9.64
+^^^^^^^^^^^^^^
+
+* Fixed: :issue:`309`: Aggregate past fills into the ``Trade`` they belong to upon connect.
+* ``ContFut`` objects are now hashable (:issue:`310`).
+* Added ``Watchdog.probeTimeout`` parameter (:issue:`307`).
+
+Version 0.9.63
+^^^^^^^^^^^^^^
+
+* Fixed :issue:`282`: ``util.Qt()`` also works with the ProactorEventLoop
+  (default on Windows) now.
+* Fixed :issue:`303`: A regression in TWS 480.4l+ is bypassed now to avoid
+  ``IB.connect()`` timeouts. Request timeouts during syncing are logged as errors but will let
+  the connect proceed.
+
 Version 0.9.62
 ^^^^^^^^^^^^^^
 

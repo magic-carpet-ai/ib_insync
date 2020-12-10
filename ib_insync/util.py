@@ -293,13 +293,18 @@ def run(*awaitables: Awaitable, timeout: float = None):
         if loop.is_running():
             return
         loop.run_forever()
-        f = asyncio.gather(*asyncio.Task.all_tasks())
-        f.cancel()
         result = None
-        try:
-            loop.run_until_complete(f)
-        except asyncio.CancelledError:
-            pass
+        all_tasks = (
+            asyncio.all_tasks(loop)  # type: ignore
+            if sys.version_info >= (3, 7) else asyncio.Task.all_tasks())
+        if all_tasks:
+            # cancel pending tasks
+            f = asyncio.gather(*all_tasks)
+            f.cancel()
+            try:
+                loop.run_until_complete(f)
+            except asyncio.CancelledError:
+                pass
     else:
         if len(awaitables) == 1:
             future = awaitables[0]
@@ -489,6 +494,7 @@ def useQt(qtLib: str = 'PyQt5', period: float = 0.01):
         qloop.exec_()
         timer.stop()
         stack.append((qloop, timer))
+        qApp.processEvents()
 
     if qtLib not in ('PyQt5', 'PySide2'):
         raise RuntimeError(f'Unknown Qt library: {qtLib}')
