@@ -343,6 +343,10 @@ class Wrapper:
             trade = self.trades.get(key)
             if trade:
                 trade.order.permId = order.permId
+                trade.order.totalQuantity = order.totalQuantity
+                trade.order.lmtPrice = order.lmtPrice
+                trade.order.auxPrice = order.auxPrice
+                trade.order.orderType = order.orderType
             else:
                 # ignore '?' values in the order
                 order = Order(**{
@@ -1006,7 +1010,7 @@ class Wrapper:
 
     def error(self, reqId: int, errorCode: int, errorString: str):
         # https://interactivebrokers.github.io/tws-api/message_codes.html
-        warningCodes = {165, 202, 399, 434, 492, 10167}
+        warningCodes = {165, 202, 399, 404, 434, 492, 10167}
         isWarning = errorCode in warningCodes or 2100 <= errorCode < 2200
         msg = (
             f'{"Warning" if isWarning else "Error"} '
